@@ -54,6 +54,7 @@ class ConfluenceStorageFormatTranslator(ConfluenceBaseTranslator):
         self._thead_context = []
         self.colspecs = []
         self._tocdepth = ConfluenceState.toctreeDepth(self.docname)
+        self.add_pagename_prefix = config.confluence_add_pagename_prefix
 
         # helpers for dealing with disabled/unsupported features
         restricted = config.confluence_adv_restricted
@@ -930,6 +931,13 @@ class ConfluenceStorageFormatTranslator(ConfluenceBaseTranslator):
             #  Note: plain-text-link body cannot have inline markup; content
             #        will be added into body already and skip-children should be
             #        invoked for this use case.
+
+            if self.add_pagename_prefix:
+                docname_split = self.docname.split('/')
+                if len(docname_split) > 0:
+                    pagename = docname_split[-1].replace(' ', '').replace('-', '')
+                    anchor_value = '{}-{}'.format(pagename, anchor_value)
+
             self.body.append(self._start_ac_link(node, anchor_value))
             self.body.append(self._start_ac_link_body(node))
             self._reference_context.append(self._end_ac_link_body(node))
