@@ -66,6 +66,7 @@ def apply_defaults(conf):
         'confluence_purge_from_master',
         'confluence_remove_title',
         'confluence_watch',
+        'confluence_add_pagename_prefix',
     ]
     for key in config2bool:
         if getattr(conf, key) is not None:

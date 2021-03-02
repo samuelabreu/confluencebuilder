@@ -96,6 +96,11 @@ def validate_configuration(builder):
 
     # ##################################################################
 
+    validator.conf('confluence_add_pagename_prefix') \
+             .bool()
+
+    # ##################################################################
+
     if config.confluence_client_cert is not None:
         client_cert = config.confluence_client_cert
         if isinstance(client_cert, tuple):
