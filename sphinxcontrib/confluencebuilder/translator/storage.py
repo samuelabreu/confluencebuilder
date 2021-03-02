@@ -55,6 +55,7 @@ class ConfluenceStorageFormatTranslator(ConfluenceBaseTranslator):
         self.colspecs = []
         self._tocdepth = ConfluenceState.toctreeDepth(self.docname)
         self.add_pagename_prefix = config.confluence_add_pagename_prefix
+        self.file_suffix = config.confluence_file_suffix
 
         # helpers for dealing with disabled/unsupported features
         restricted = config.confluence_adv_restricted
@@ -931,13 +932,6 @@ class ConfluenceStorageFormatTranslator(ConfluenceBaseTranslator):
             #  Note: plain-text-link body cannot have inline markup; content
             #        will be added into body already and skip-children should be
             #        invoked for this use case.
-
-            if self.add_pagename_prefix:
-                docname_split = self.docname.split('/')
-                if len(docname_split) > 0:
-                    pagename = docname_split[-1].replace(' ', '').replace('-', '')
-                    anchor_value = '{}-{}'.format(pagename, anchor_value)
-
             self.body.append(self._start_ac_link(node, anchor_value))
             self.body.append(self._start_ac_link_body(node))
             self._reference_context.append(self._end_ac_link_body(node))
@@ -1930,6 +1924,10 @@ class ConfluenceStorageFormatTranslator(ConfluenceBaseTranslator):
         """
         attribs = {}
         if anchor:
+            docname = self.docname
+            if 'refuri' in node.attributes:
+                docname = node.attributes['refuri'].split(self.file_suffix)[0]
+                anchor = self._add_anchor_prefix(docname, anchor)
             attribs['ac:anchor'] = anchor
         return self._start_tag(node, 'ac:link', suffix=self.nl, **attribs)
 
@@ -2196,3 +2194,27 @@ class ConfluenceStorageFormatTranslator(ConfluenceBaseTranslator):
         for find, encoded in STORAGE_FORMAT_REPLACEMENTS:
             data = data.replace(find, encoded)
         return data
+
+    def _add_anchor_prefix(self, docname, anchor_value):
+        """
+        add the docname without spaces and dashes as prefix to anchors
+
+        A helper to solve a problem where confluence anchors don't work without
+        appending pagename as anchor prefix.
+
+        https://github.com/sphinx-contrib/confluencebuilder/issues/443
+        Args:
+            docname: pagename of destination
+            anchor_value: the anchor value to use
+
+        Returns:
+            anchor with prefix if configured to add prefix or original anchor
+            otherwise
+        """
+        if self.add_pagename_prefix:
+            docname_split = docname.split('/')
+            if len(docname_split) > 0:
+                pagename = docname_split[-1].replace(' ', '').replace('-', '')
+                anchor_value = '{}-{}'.format(pagename, anchor_value)
+        return anchor_value
+
